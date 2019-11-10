@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>图片粘贴上传</title>
+		<link rel="stylesheet" href="./lib/bootstrap.css">
+		<script src="./lib/jquery-2.1.4.min.js"></script>
+		<script src="./lib/bootstrap.js"></script>
+	</head>
+
+	<body>
+		<div id="app">
+			<div id="aaa" contentEditable="true"></div>
+		</div>
+		<script type="text/javascript">
+			$("#aaa").on('paste', function(eventObj) {
+				// 处理粘贴事件
+				var event = eventObj.originalEvent;
+				var imageRe = new RegExp(/image\/.*/);
+				var fileList = $.map(event.clipboardData.items, function(o) {
+					if (!imageRe.test(o.type)) {
+						return
+					}
+					var blob = o.getAsFile();
+					return blob;
+				});
+				if (fileList.length <= 0) {
+					return
+				}
+				upload(fileList);
+				//阻止默认行为即不让剪贴板内容在div中显示出来
+				event.preventDefault();
+			});
+
+			function upload(fileList) {
+				for (var i = 0, l = fileList.length; i < l; i++) {
+					var fd = new FormData();
+					var f = fileList[i];
+					fd.append('files', f);
+					var editor = document.getElementById("aaa");
+					$.ajax({
+						url: "/upload_editor_photo3",
+						type: 'POST',
+						dataType: 'json',
+						data: fd,
+						processData: false,
+						contentType: false,
+						xhrFields: {
+							withCredentials: true
+						},
+						headers: {
+							'Access-Control-Allow-Origin': '*',
+							'Access-Control-Allow-Credentials': 'true'
+						},
+						success: function(res) {
+							var len = res.data.length;
+							for (var i = 0; i < len; i++) {
+								var img = document.createElement('img');
+								img.src = res.data[i]; //设置上传完图片之后展示的图片
+								editor.appendChild(img);
+							}
+						},
+						error: function() {
+							alert("上传图片错误");
+						}
+					});
+				}
+			}
+		</script>
+	</body>
+	<style>
+		#aaa {
+			width: 300px;
+			height: 300px;
+			overflow: hidden;
+			margin: 40px auto 0;
+			border: 1px solid #2E6DA4;
+			border-radius: 0.25rem;
+		}
+	</style>
+</html>
